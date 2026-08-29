@@ -1,33 +1,33 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# FreeLLMAPI is a stateful, always-on service: SQLite lives on disk, the
-# encryption key that unlocks stored provider keys sits next to it, and the
-# catalog-sync / health / cooldown-probe schedulers only run while the process
-# is alive. That rules out the free instance type (it sleeps) and any runtime
-# without a persistent disk.
+# Free instance type, deliberately: Render gates *any* paid resource (a larger
+# plan, or a disk) behind a card on file, and account credit does not waive
+# that. Free instances cannot mount a disk, so persistence comes from the
+# app's own encrypted backup layer instead — see FREEAPI_DB_BACKUP_URL below.
 services:
   - type: web
     name: freellmapi
     runtime: docker
     dockerfilePath: ./Dockerfile
-    dockerContext: .
-    # Disks require a paid instance type; free instances also spin down, which
-    # would stop the background schedulers.
-    plan: starter
+    plan: free
     region: singapore
     healthCheckPath: /api/ping
-    autoDeployTrigger: commit
-    disk:
-      name: freellmapi-data
-      # Matches the image's data dir, so FREEAPI_DB_PATH can stay default.
-      # docker-entrypoint.sh chowns this to `node` at boot — Render mounts it
-      # root-owned and the app runs unprivileged.
-      mountPath: /app/server/data
-      sizeGB: 1
     envVars:
-      # 64-char hex. Set once in the Render dashboard and never rotate it, or
-      # the provider keys already encrypted on the disk stop decrypting.
+      # 64-char hex. Also doubles as the backup encryption key, so losing it
+      # means losing every provider key already stored.
       - key: ENCRYPTION_KEY
+        sync: false
+      # Where the encrypted SQLite snapshot lives. A free instance has an
+      # ephemeral filesystem: without this, every spin-down loses the provider
+      # keys. db-backup.ts restores from here on boot when the DB is missing,
+      # then re-uploads every 5 minutes.
+      # Format (parseHuggingFaceTarget, db-backup.ts:95):
+      #   https://huggingface.co/datasets/<user>/<repo>/resolve/main/freellmapi.db.enc
+      - key: FREEAPI_DB_BACKUP_URL
+        sync: false
+      # HF write token. Uploads 401 without it, and the failure only ever
+      # surfaces later as an empty restore.
+      - key: FREEAPI_DB_BACKUP_TOKEN
         sync: false
       - key: NODE_ENV
         value: production
