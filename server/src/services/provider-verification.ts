@@ -1,3 +1,5 @@
+import { probeEndpointModel } from './model-discovery.js';
+
 /** Outcome of a single verification check. */
 export type CheckOutcome = 'pass' | 'fail' | 'inconclusive';
 
@@ -45,4 +47,78 @@ export async function probeAuthEnforcement(baseUrl: string): Promise<AuthEnforce
   if (res.status === 200) return { outcome: 'fail', status: res.status };
   if (res.status === 401 || res.status === 403) return { outcome: 'pass', status: res.status };
   return { outcome: 'inconclusive', status: res.status };
+}
+
+export interface PositiveCheck {
+  outcome: 'pass' | 'fail';
+  modelId?: string;
+  latencyMs?: number;
+  toolCalls?: boolean;
+  reasoning?: boolean;
+  reason?: string;
+}
+
+export interface VerificationReport {
+  positive: PositiveCheck;
+  negative: AuthEnforcementCheck;
+  /** Whether the dashboard may offer to save this candidate. */
+  connectable: boolean;
+  /** Present when connect is allowed but something is unproven. */
+  warning?: string;
+}
+
+export interface VerifyEndpointDeps {
+  probePositive?: (baseUrl: string, apiKey: string) => Promise<PositiveCheck>;
+  probeNegative?: (baseUrl: string) => Promise<AuthEnforcementCheck>;
+}
+
+/**
+ * Run both verification checks against a candidate provider and reduce them to
+ * a single verdict.
+ *
+ * @param baseUrl - OpenAI-compatible base, resolved from the trusted candidate
+ *   feed by the caller — never from client input.
+ * @param apiKey - The key the operator pasted.
+ * @param deps - Probe overrides, for tests.
+ */
+export async function verifyEndpoint(
+  baseUrl: string,
+  apiKey: string,
+  deps: VerifyEndpointDeps = {},
+): Promise<VerificationReport> {
+  const probeNegative = deps.probeNegative ?? probeAuthEnforcement;
+  const probePositive = deps.probePositive ?? defaultPositiveProbe;
+
+  // Sequential, not concurrent: the negative probe deliberately sends a bad
+  // key, and firing it alongside the real one invites a provider's abuse
+  // heuristics to rate-limit or flag the key the operator just created.
+  const positive = await probePositive(baseUrl, apiKey);
+  const negative = await probeNegative(baseUrl);
+
+  const connectable = positive.outcome === 'pass' && negative.outcome !== 'fail';
+  const warning = connectable && negative.outcome === 'inconclusive'
+    ? 'Could not confirm this endpoint enforces your key'
+    : undefined;
+
+  return {
+    positive,
+    negative,
+    connectable,
+    ...(warning ? { warning } : {}),
+  };
+}
+
+async function defaultPositiveProbe(baseUrl: string, apiKey: string): Promise<PositiveCheck> {
+  try {
+    const probe = await probeEndpointModel(baseUrl, apiKey);
+    return {
+      outcome: 'pass',
+      modelId: probe.modelId,
+      latencyMs: probe.latencyMs,
+      ...(probe.toolCalls !== undefined ? { toolCalls: probe.toolCalls } : {}),
+      ...(probe.reasoning !== undefined ? { reasoning: probe.reasoning } : {}),
+    };
+  } catch (err) {
+    return { outcome: 'fail', reason: err instanceof Error ? err.message : String(err) };
+  }
 }
