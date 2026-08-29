@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { z } from 'zod';
 
 /**
@@ -56,4 +57,41 @@ export function parseCandidateFeed(raw: unknown): ProviderCandidate[] {
   }
 
   return candidates;
+}
+
+// Resolved relative to this module rather than the process cwd, which differs
+// between `tsx watch` in dev, the Docker image and a test run. server/src and
+// server/dist sit at the same depth, so one path serves both.
+const FEED_URL = new URL('../../../shared/providers-candidates.json', import.meta.url);
+
+/**
+ * Where the feed is read from. Overridable the same way the DB and startup
+ * config are, so a self-hoster can ship their own candidate list.
+ */
+function feedPath(): URL | string {
+  return process.env.FREEAPI_CANDIDATES_PATH?.trim() || FEED_URL;
+}
+
+/**
+ * Read and validate the candidate feed that ships with the build.
+ *
+ * @param path - Override, for tests and self-hosted feeds.
+ * @returns Validated candidates; an empty list when the file is absent.
+ * @throws If the feed exists but does not validate.
+ */
+export function loadCandidates(path: URL | string = feedPath()): ProviderCandidate[] {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(path, 'utf8');
+  } catch {
+    // A build without the feed is a working install with nothing to suggest,
+    // not a broken one.
+    return [];
+  }
+  return parseCandidateFeed(JSON.parse(raw));
+}
+
+/** Look up one candidate by its slug. Returns null when unknown. */
+export function getCandidate(id: string): ProviderCandidate | null {
+  return loadCandidates().find(candidate => candidate.id === id) ?? null;
 }

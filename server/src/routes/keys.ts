@@ -18,6 +18,8 @@ import { discoverEndpointModels, probeEndpointModel, ModelDiscoveryError } from 
 import { probeEmbeddingDimensions, registerCustomEmbeddingModel } from '../services/embeddings.js';
 import { endpointScopeForBaseUrl, normalizeBaseUrl } from '../lib/endpoint-scope.js';
 import { recordCustomModelTombstone } from '../services/custom-model-tombstone.js';
+import { loadCandidates, getCandidate } from '../services/provider-candidates.js';
+import { verifyEndpoint } from '../services/provider-verification.js';
 import type { Db } from '../db/types.js';
 import { parseModelScope } from '../lib/model-scope.js';
 import { KEY_PROXY_URL_ERROR, KEY_PROXY_URL_MAX, decryptProxyUrl, encryptProxyUrl, isValidKeyProxyUrl, maskProxyUrl } from '../lib/key-proxy.js';
@@ -855,6 +857,52 @@ keysRouter.post('/custom/discover-models', async (req: Request, res: Response) =
 // timeout and a clean error beat a silent 120s hang. Only a SUCCESSFUL probe
 // writes a `requests` row (which the stats cache folds into the bandit); a
 // failure (401 / timeout / unreachable) surfaces the reason and records nothing.
+// ── Provider candidates (Discover flow) ───────────────────────────────────
+// Surfaced so an operator can adopt a newly-published free provider without a
+// release: pick a candidate, sign up in a new tab, paste the key back, and let
+// verifyEndpoint decide whether it is safe to save.
+
+keysRouter.get('/candidates', (_req: Request, res: Response) => {
+  res.json({ candidates: loadCandidates() });
+});
+
+const verifyCandidateSchema = z.object({
+  apiKey: z.string().trim().min(1).optional(),
+});
+
+keysRouter.post('/candidates/:id/verify', async (req: Request, res: Response) => {
+  const candidate = getCandidate(String(req.params.id ?? ''));
+  if (!candidate) {
+    res.status(404).json({ error: { message: 'Unknown provider candidate.' } });
+    return;
+  }
+
+  const parsed = verifyCandidateSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
+    return;
+  }
+
+  const apiKey = parsed.data.apiKey ?? '';
+  if (candidate.authMode === 'bearer' && !apiKey) {
+    res.status(400).json({ error: { message: 'This provider needs an API key.' } });
+    return;
+  }
+
+  // The base URL comes from the feed entry, NEVER from the request body. A
+  // caller-supplied URL would turn this into an SSRF proxy that also accepts a
+  // credential, and any `baseUrl` in the body is ignored on purpose. The feed
+  // itself is trusted input — it ships in the repo through a reviewed merge and
+  // parseCandidateFeed has already required https — so it does not go through
+  // the runtime url-guard that exists for operator-typed custom endpoints.
+  const report = await verifyEndpoint(candidate.baseUrl, apiKey || 'no-key');
+
+  res.json({
+    candidate: { id: candidate.id, name: candidate.name, baseUrl: candidate.baseUrl },
+    report,
+  });
+});
+
 keysRouter.post('/custom/probe', async (req: Request, res: Response) => {
   const parsed = discoverModelsSchema.safeParse(req.body);
   if (!parsed.success) {
