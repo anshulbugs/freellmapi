@@ -1,3 +1,14 @@
+---
+title: FreeLLMAPI
+emoji: 🔀
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+app_port: 3001
+pinned: false
+short_description: One OpenAI-compatible endpoint over 34 free LLM providers
+---
+
 <div align="center">
 
 # FreeLLMAPI
