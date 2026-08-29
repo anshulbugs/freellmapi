@@ -1,0 +1,35 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# FreeLLMAPI is a stateful, always-on service: SQLite lives on disk, the
+# encryption key that unlocks stored provider keys sits next to it, and the
+# catalog-sync / health / cooldown-probe schedulers only run while the process
+# is alive. That rules out the free instance type (it sleeps) and any runtime
+# without a persistent disk.
+services:
+  - type: web
+    name: freellmapi
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Disks require a paid instance type; free instances also spin down, which
+    # would stop the background schedulers.
+    plan: starter
+    region: singapore
+    healthCheckPath: /api/ping
+    autoDeployTrigger: commit
+    disk:
+      name: freellmapi-data
+      # Matches the image's data dir, so FREEAPI_DB_PATH can stay default.
+      # docker-entrypoint.sh chowns this to `node` at boot — Render mounts it
+      # root-owned and the app runs unprivileged.
+      mountPath: /app/server/data
+      sizeGB: 1
+    envVars:
+      # 64-char hex. Set once in the Render dashboard and never rotate it, or
+      # the provider keys already encrypted on the disk stop decrypting.
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
