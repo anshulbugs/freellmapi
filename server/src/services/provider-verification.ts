@@ -19,6 +19,35 @@ const PROBE_TIMEOUT_MS = 15_000;
 const SENTINEL_KEY = 'freellmapi-invalid-verification-probe';
 
 export async function probeAuthEnforcement(baseUrl: string): Promise<AuthEnforcementCheck> {
+  return probeAuthWall(baseUrl, SENTINEL_KEY);
+}
+
+/**
+ * Ask whether an endpoint serves callers who present no credential at all.
+ *
+ * Distinct from probeAuthEnforcement on purpose. A keyless provider is reached
+ * by OMITTING the Authorization header; sending a junk bearer instead tests
+ * whether bad credentials are rejected, which is a different question and gives
+ * the wrong answer for exactly the providers this is aimed at — OVH refuses a
+ * junk bearer with 403 while serving anonymous callers normally.
+ *
+ * @param baseUrl - OpenAI-compatible endpoint root.
+ * @returns `pass` when anonymous access is refused (an auth wall exists),
+ *   `fail` when it is served, `inconclusive` otherwise.
+ */
+export async function probeAnonymousAccess(baseUrl: string): Promise<AuthEnforcementCheck> {
+  return probeAuthWall(baseUrl, null);
+}
+
+/**
+ * Shared request for both probes.
+ *
+ * @param apiKey - Bearer to present, or null to send no Authorization header.
+ */
+async function probeAuthWall(baseUrl: string, apiKey: string | null): Promise<AuthEnforcementCheck> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (apiKey !== null) headers.Authorization = `Bearer ${apiKey}`;
+
   // A candidate that is down, slow, or not OpenAI-shaped must not take the
   // whole connect flow with it — the operator is waiting on this call, and an
   // unreachable endpoint is a separate finding from an unenforced key.
@@ -26,10 +55,7 @@ export async function probeAuthEnforcement(baseUrl: string): Promise<AuthEnforce
   try {
     res = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${SENTINEL_KEY}`,
-      },
+      headers,
       body: JSON.stringify({
         model: 'probe',
         messages: [{ role: 'user', content: 'ping' }],

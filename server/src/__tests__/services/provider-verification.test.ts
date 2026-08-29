@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { probeAuthEnforcement, verifyEndpoint } from '../../services/provider-verification.js';
+import { probeAnonymousAccess, probeAuthEnforcement, verifyEndpoint } from '../../services/provider-verification.js';
 
 // A candidate provider is only safe to connect if it actually ENFORCES the key
 // the operator pasted. Several real endpoints in this catalog do not: the
@@ -72,6 +72,30 @@ describe('probeAuthEnforcement', () => {
 
 const okPositive = async () => ({ outcome: 'pass' as const, modelId: 'demo-1', latencyMs: 120 });
 const failPositive = async () => ({ outcome: 'fail' as const, reason: 'Probe request failed: 500' });
+
+// A keyless provider is reached by omitting the Authorization header entirely
+// (providers/index.ts:166). Sending a junk bearer instead asks a different
+// question: OVH answers 403 to a bad credential but serves anonymous callers
+// fine, so the junk-bearer probe reports a dead free tier that is still alive.
+describe('probeAnonymousAccess', () => {
+  it('sends no Authorization header', async () => {
+    const mock = stubStatus(200);
+
+    await probeAnonymousAccess(ENDPOINT);
+
+    const init = mock.mock.calls[0]![1] as RequestInit;
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBeUndefined();
+  });
+
+  it('reports auth enforced when an anonymous call is refused', async () => {
+    stubStatus(401);
+
+    const result = await probeAnonymousAccess(ENDPOINT);
+
+    expect(result.outcome).toBe('pass');
+  });
+});
 
 describe('verifyEndpoint', () => {
   it('marks the candidate connectable when the key works and a bad key is refused', async () => {
