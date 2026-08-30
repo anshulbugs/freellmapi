@@ -12,6 +12,7 @@ import { NodeScheduler } from './lib/scheduler.js';
 import { loadConfig } from './lib/config.js';
 import { applyDeclarativeConfigFromEnv } from './services/declarative-config.js';
 import { restoreDbBackupIfNeeded, startDbBackupPump, createShutdownBackup, markDbDigestFromDisk } from './lib/db-backup.js';
+import { applyEnvBootstrap } from './services/env-bootstrap.js';
 import { startBackupScheduler } from './services/backups.js';
 import { userCount } from './services/auth.js';
 import { generateSetupCode } from './lib/setup-code.js';
@@ -42,6 +43,10 @@ async function main() {
     await restoreDbBackupIfNeeded();
   }
   initDb(config.dbPath ?? undefined);
+
+  // Identity from env, so a disposable database does not mean a new unified API
+  // key and an unclaimed dashboard on every boot.
+  applyEnvBootstrap();
   applyDeclarativeConfigFromEnv();
   // After initDb: the unknown-model half of this check reads the catalog.
   warnOnRoutingOverrideDrift();
