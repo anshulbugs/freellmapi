@@ -11,7 +11,7 @@ import { installProcessSafetyNet } from './lib/process-safety-net.js';
 import { NodeScheduler } from './lib/scheduler.js';
 import { loadConfig } from './lib/config.js';
 import { applyDeclarativeConfigFromEnv } from './services/declarative-config.js';
-import { restoreDbBackupIfNeeded, startDbBackupPump } from './lib/db-backup.js';
+import { restoreDbBackupIfNeeded, startDbBackupPump, createShutdownBackup } from './lib/db-backup.js';
 import { startBackupScheduler } from './services/backups.js';
 import { userCount } from './services/auth.js';
 import { generateSetupCode } from './lib/setup-code.js';
@@ -77,6 +77,19 @@ async function main() {
     startCatalogSync(scheduler);
     startCooldownProbe(scheduler);
     startDbBackupPump(getDb(), scheduler, config.dbPath ?? undefined);
+
+    // Flush a final backup when the platform asks us to stop. On a host with no
+    // persistent disk this is what makes a redeploy survivable: without it the
+    // last few minutes of writes are lost, and worse, the next container
+    // restores the older blob and its first pump tick uploads that copy over
+    // the good one, turning a stale backup into a permanent one.
+    const flushBackup = createShutdownBackup(getDb(), config.dbPath ?? undefined);
+    for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+      process.once(signal, () => {
+        console.log(`[shutdown] ${signal} received - flushing final backup`);
+        void flushBackup().finally(() => process.exit(0));
+      });
+    }
     startBackupScheduler(scheduler);
     startCustomModelSync(getDb(), scheduler);
 
