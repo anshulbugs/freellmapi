@@ -18,7 +18,7 @@ const httpsUrl = z
   .url()
   .refine(value => value.startsWith('https://'), { message: 'must be an https URL' });
 
-const candidateSchema = z.object({
+export const candidateSchema = z.object({
   /** Stable slug; the dashboard addresses a candidate by this and never by base URL. */
   id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/, 'id must be a lowercase slug'),
   name: z.string().min(1),

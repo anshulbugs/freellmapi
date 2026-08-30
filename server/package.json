@@ -16,7 +16,8 @@
     "db:migration:fresh": "tsx src/db/migrate/cli.ts fresh",
     "db:migration:status": "tsx src/db/migrate/cli.ts status",
     "db:migration:create": "tsx src/db/migrate/cli.ts create",
-    "probe:free-tiers": "tsx src/scripts/probe-free-tiers.ts"
+    "probe:free-tiers": "tsx src/scripts/probe-free-tiers.ts",
+    "discover:providers": "tsx src/scripts/discover-providers.ts"
   },
   "dependencies": {
     "@freellmapi/shared": "*",

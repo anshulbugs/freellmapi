@@ -42,16 +42,39 @@ jobs:
         if: steps.probe.outcome == 'failure'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TITLE: 'Free-tier regression detected'
+          TITLE: Free-tier regression detected
         run: |
-          BODY="$(printf 'The daily probe found a keyless provider that now demands a key.\n\n```\n%s\n```\n\nRun: %s/%s/actions/runs/%s\n' \
-            "$(cat probe-output.txt)" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")"
+          # The run summary is the one channel that always exists. Issues can be
+          # disabled on a repo (they are on this fork), and a watch whose only
+          # alarm channel is unavailable reports nothing at all.
+          {
+            echo '## Free-tier regression'
+            echo
+            echo '~~~'
+            cat probe-output.txt
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          {
+            echo 'The daily probe found a keyless provider that now demands a key.'
+            echo
+            echo '~~~'
+            cat probe-output.txt
+            echo '~~~'
+            echo
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > issue-body.md
 
           # One rolling issue rather than a new one per day: a watch that opens
-          # an issue every morning is a watch that gets muted.
-          EXISTING="$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number')"
+          # an issue every morning is a watch that gets muted. Best effort — the
+          # summary above and the red run below are the real signal.
+          EXISTING="$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null || true)"
           if [ -n "$EXISTING" ]; then
-            gh issue comment "$EXISTING" --body "$BODY"
+            gh issue comment "$EXISTING" --body-file issue-body.md || echo 'could not comment on issue'
           else
-            gh issue create --title "$TITLE" --body "$BODY"
+            gh issue create --title "$TITLE" --body-file issue-body.md || echo 'issues unavailable — see the run summary'
           fi
+
+          # Fail deliberately: a red scheduled run is what actually emails the
+          # repository owner.
+          exit 1
