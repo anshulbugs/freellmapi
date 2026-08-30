@@ -1,0 +1,32 @@
+{
+  "models": [
+    {
+      "platform": "github",
+      "modelId": "openai/gpt-5",
+      "displayName": "GPT-5 (GitHub)",
+      "intelligenceRank": 1,
+      "speedRank": 7,
+      "sizeLabel": "Frontier",
+      "rpmLimit": 10,
+      "rpdLimit": 50,
+      "monthlyTokenBudget": "~18M",
+      "contextWindow": 128000,
+      "supportsTools": true,
+      "fallbackEnabled": true
+    },
+    {
+      "platform": "github",
+      "modelId": "openai/gpt-4.1",
+      "displayName": "GPT-4.1 (GitHub)",
+      "intelligenceRank": 20,
+      "speedRank": 7,
+      "sizeLabel": "Large",
+      "rpmLimit": 10,
+      "rpdLimit": 50,
+      "monthlyTokenBudget": "~9M",
+      "contextWindow": 8000,
+      "supportsTools": true,
+      "fallbackEnabled": true
+    }
+  ]
+}
