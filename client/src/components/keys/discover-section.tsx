@@ -32,6 +32,21 @@ interface VerifyResponse {
   report: VerificationReport
 }
 
+
+// A real popup window rather than a tab. target="_blank" yields a tab in every
+// modern browser; passing window features is what makes one open a window, and
+// it keeps the dashboard visible beside the signup page so the operator can
+// paste the key straight back.
+//
+// noopener is not cosmetic: without it the opened page can navigate this one
+// through window.opener, and this tab holds a dashboard session. It is passed
+// in the features string AND the returned handle's opener is cleared, because
+// older engines ignore the former.
+function openSignupWindow(url: string): void {
+  const popup = window.open(url, '_blank', 'noopener,noreferrer,width=1100,height=850')
+  if (popup) popup.opener = null
+}
+
 function CandidateRow({ candidate }: { candidate: Candidate }) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
@@ -94,15 +109,14 @@ function CandidateRow({ candidate }: { candidate: Candidate }) {
         {/* Opens the provider's own signup page in a new tab. noopener is not
             optional here: without it the opened page can retarget this one via
             window.opener, and this tab holds a dashboard session. */}
-        <a
-          href={candidate.signupUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={() => openSignupWindow(candidate.signupUrl)}
           className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
         >
           {t('keys.discoverSignUp')}
           <ExternalLink className="size-3.5" />
-        </a>
+        </button>
       </div>
 
       <div className="flex items-center gap-2">
@@ -175,15 +189,14 @@ function SupportedRow({
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {provider.signupUrl && (
-          <a
-            href={provider.signupUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => openSignupWindow(provider.signupUrl!)}
             className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
           >
             {t('keys.discoverSignUp')}
             <ExternalLink className="size-3.5" />
-          </a>
+          </button>
         )}
         <Button size="sm" onClick={() => onAddKey(provider.platform)}>
           {t('keys.discoverAddKey')}

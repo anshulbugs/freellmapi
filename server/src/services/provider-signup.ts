@@ -24,6 +24,21 @@ export const SIGNUP_URLS: Readonly<Record<string, string>> = {
   zhipu: 'https://open.bigmodel.cn/usercenter/apikeys',
   modelscope: 'https://modelscope.cn/my/myaccesstoken',
   pollinations: 'https://auth.pollinations.ai/',
+  ollama: 'https://ollama.com/settings/keys',
+  llm7: 'https://token.llm7.io/',
+  siliconflow: 'https://cloud.siliconflow.cn/account/ak',
+  reka: 'https://platform.reka.ai/',
+  requesty: 'https://app.requesty.ai/',
+  aion: 'https://www.aionlabs.ai/',
+  aihorde: 'https://aihorde.net/register',
+  qianfan: 'https://console.bce.baidu.com/qianfan/',
+  volcengine: 'https://console.volcengine.com/ark',
+  xfyun: 'https://console.xfyun.cn/',
+  sealion: 'https://sea-lion.ai/',
+  // Keyless: no account needed, so these point at the product page rather than
+  // a console. The Add key flow accepts a blank key for both.
+  ovh: 'https://www.ovhcloud.com/en/public-cloud/ai-endpoints/',
+  kilo: 'https://kilo.ai/',
 };
 
 /**
