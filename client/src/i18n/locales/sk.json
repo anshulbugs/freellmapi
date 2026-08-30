@@ -461,7 +461,7 @@
     "probeFailed": "Test zlyhal: {reason}",
     "discoverTitle": "Modely na tomto endpointe",
     "discoverHint": "Vyberte modely na registráciu. Už pridané zostávajú uzamknuté.",
-    "discoverEmpty": "Tento endpoint nevrátil žiadne modely.",
+    "discoverEmpty": "No candidate providers yet.",
     "discoverAlreadyAdded": "Pridané",
     "discoverSelectAll": "Vybrať všetko",
     "modelsAdded": "Pridaných modelov: {count}",
@@ -596,7 +596,18 @@
     "testProxy": "Test",
     "testingProxy": "Testing…",
     "proxyTestOk": "Proxy works — {ms}ms round trip",
-    "proxyTestFail": "Proxy failed: {reason}"
+    "proxyTestFail": "Proxy failed: {reason}",
+    "tabDiscover": "Discover",
+    "discoverIntro": "Newly published free providers. Sign up with the provider, paste the key back here, and it is checked before anything is saved.",
+    "discoverSignUp": "Sign up",
+    "discoverKeyless": "No key needed",
+    "discoverKeyPlaceholder": "Paste API key",
+    "discoverTest": "Test & connect",
+    "discoverTesting": "Testing...",
+    "discoverPassed": "Verified: your key works and this endpoint enforces it.",
+    "discoverWarning": "Could not confirm this endpoint enforces your key. You can still save it.",
+    "discoverBlockedKey": "That key did not work against this endpoint.",
+    "discoverBlockedAuth": "Blocked: this endpoint accepts any key, so your key would protect nothing."
   },
   "backups": {
     "title": "Backups",
