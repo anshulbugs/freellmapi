@@ -487,7 +487,7 @@
     "probeFailed": "Probe failed: {reason}",
     "discoverTitle": "Models on this endpoint",
     "discoverHint": "Pick the models to register. Ones you already added stay locked.",
-    "discoverEmpty": "This endpoint returned no models.",
+    "discoverEmpty": "No candidate providers yet.",
     "discoverAlreadyAdded": "Added",
     "discoverSelectAll": "Select all",
     "modelsAdded": "{count} models added",
@@ -596,7 +596,18 @@
     "bulkDelete": "Delete all",
     "bulkDeleteConfirm": "Delete {count}?",
     "bulkResult": "Updated {done}; failed {failed}.",
-    "bulkDeleteResult": "Deleted {done}; failed {failed}."
+    "bulkDeleteResult": "Deleted {done}; failed {failed}.",
+    "tabDiscover": "Discover",
+    "discoverIntro": "Newly published free providers. Sign up with the provider, paste the key back here, and it is checked before anything is saved.",
+    "discoverSignUp": "Sign up",
+    "discoverKeyless": "No key needed",
+    "discoverKeyPlaceholder": "Paste API key",
+    "discoverTest": "Test & connect",
+    "discoverTesting": "Testing...",
+    "discoverPassed": "Verified: your key works and this endpoint enforces it.",
+    "discoverWarning": "Could not confirm this endpoint enforces your key. You can still save it.",
+    "discoverBlockedKey": "That key did not work against this endpoint.",
+    "discoverBlockedAuth": "Blocked: this endpoint accepts any key, so your key would protect nothing."
   },
   "backups": {
     "title": "Backups",

@@ -19,10 +19,12 @@ import { ProviderChecklistSection } from '@/components/keys/provider-checklist-s
 import { AddKeyDialog } from '@/components/keys/add-key-dialog'
 import { ExportKeysDialog } from '@/components/keys/export-keys-dialog'
 import { AgentCompatibilitySection } from '@/components/keys/agent-compatibility-section'
+import { DiscoverSection } from '@/components/keys/discover-section'
 
-type KeysTab = 'providers' | 'quotaSignals' | 'apiKey' | 'anthropic' | 'agents'
+type KeysTab = 'providers' | 'discover' | 'quotaSignals' | 'apiKey' | 'anthropic' | 'agents'
 const KEYS_TABS: { id: KeysTab; labelKey: string }[] = [
   { id: 'providers', labelKey: 'keys.tabProviders' },
+  { id: 'discover', labelKey: 'keys.tabDiscover' },
   { id: 'quotaSignals', labelKey: 'keys.tabQuotaSignals' },
   { id: 'apiKey', labelKey: 'keys.tabApiKey' },
   { id: 'anthropic', labelKey: 'keys.tabAnthropic' },
@@ -111,6 +113,8 @@ export default function KeysPage() {
 
         {tab === 'anthropic' && <AnthropicSection />}
         {tab === 'agents' && <AgentCompatibilitySection />}
+
+        {tab === 'discover' && <DiscoverSection />}
 
         {tab === 'quotaSignals' && (
           <QuotaSignalsSection states={(healthData?.quotaStates ?? []).slice(0, 24)} />

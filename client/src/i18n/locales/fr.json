@@ -461,7 +461,7 @@
     "probeFailed": "Échec du test : {reason}",
     "discoverTitle": "Modèles sur cet endpoint",
     "discoverHint": "Choisissez les modèles à enregistrer. Ceux déjà ajoutés restent verrouillés.",
-    "discoverEmpty": "Cet endpoint n'a renvoyé aucun modèle.",
+    "discoverEmpty": "No candidate providers yet.",
     "discoverAlreadyAdded": "Ajouté",
     "discoverSelectAll": "Tout sélectionner",
     "modelsAdded": "{count} modèles ajoutés",
@@ -596,7 +596,18 @@
     "testProxy": "Test",
     "testingProxy": "Test en cours…",
     "proxyTestOk": "Le proxy fonctionne — aller-retour en {ms} ms",
-    "proxyTestFail": "Échec du proxy : {reason}"
+    "proxyTestFail": "Échec du proxy : {reason}",
+    "tabDiscover": "Discover",
+    "discoverIntro": "Newly published free providers. Sign up with the provider, paste the key back here, and it is checked before anything is saved.",
+    "discoverSignUp": "Sign up",
+    "discoverKeyless": "No key needed",
+    "discoverKeyPlaceholder": "Paste API key",
+    "discoverTest": "Test & connect",
+    "discoverTesting": "Testing...",
+    "discoverPassed": "Verified: your key works and this endpoint enforces it.",
+    "discoverWarning": "Could not confirm this endpoint enforces your key. You can still save it.",
+    "discoverBlockedKey": "That key did not work against this endpoint.",
+    "discoverBlockedAuth": "Blocked: this endpoint accepts any key, so your key would protect nothing."
   },
   "backups": {
     "title": "Sauvegardes",

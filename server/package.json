@@ -15,7 +15,11 @@
     "db:migration:down": "tsx src/db/migrate/cli.ts down",
     "db:migration:fresh": "tsx src/db/migrate/cli.ts fresh",
     "db:migration:status": "tsx src/db/migrate/cli.ts status",
-    "db:migration:create": "tsx src/db/migrate/cli.ts create"
+    "db:migration:create": "tsx src/db/migrate/cli.ts create",
+    "probe:free-tiers": "tsx src/scripts/probe-free-tiers.ts",
+    "discover:providers": "tsx src/scripts/discover-providers.ts",
+    "catalog:keygen": "tsx src/scripts/catalog-keygen.ts",
+    "build:catalog-site": "tsx src/scripts/build-catalog-site.ts"
   },
   "dependencies": {
     "@freellmapi/shared": "*",

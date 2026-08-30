@@ -1,0 +1,69 @@
+# Weekly provider discovery.
+#
+# Opens a PULL REQUEST; it never writes to main. Every entry it proposes decides
+# where the dashboard will send a key the operator pastes, so a human reviews
+# each one. The job also does not create accounts anywhere: scripted signups to
+# farm free tiers break most providers' terms of service.
+name: Provider discovery
+
+on:
+  schedule:
+    # Mondays, 07:10 UTC.
+    - cron: '10 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    # Without the endpoint secrets there is nothing to ask, and the job would
+    # fail every week on a fork that never configured them.
+    if: vars.DISCOVERY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Research candidates
+        env:
+          DISCOVERY_BASE_URL: ${{ secrets.DISCOVERY_BASE_URL }}
+          DISCOVERY_API_KEY: ${{ secrets.DISCOVERY_API_KEY }}
+          DISCOVERY_MODEL: ${{ vars.DISCOVERY_MODEL }}
+        run: npm run discover:providers -w server | tee discovery-output.txt
+
+      - name: Open a pull request when the feed changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- shared/providers-candidates.json; then
+            echo 'no feed change'
+            exit 0
+          fi
+
+          BRANCH="discovery/$(date -u +%Y-%m-%d)"
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+          git add shared/providers-candidates.json
+          git commit -m 'chore(providers): add discovered free-tier candidates'
+          git push -u origin "$BRANCH"
+
+          {
+            echo 'Automated discovery. **Review each entry before merging** - a candidate decides where a pasted API key is sent.'
+            echo
+            echo 'Check for each: the base URL is the real OpenAI-compatible root, the signup page is the provider own domain, and the free tier needs no card.'
+            echo
+            echo '~~~'
+            cat discovery-output.txt
+            echo '~~~'
+          } > pr-body.md
+
+          gh pr create --title 'Discovered free-tier provider candidates' --body-file pr-body.md

@@ -1,0 +1,80 @@
+# Daily free-tier regression watch.
+#
+# Probes only endpoints that need no credential — the keyless providers in the
+# registry and keyless entries in the candidate feed. Widening this to keyed
+# providers would mean storing live provider keys as Actions secrets, i.e. a
+# second copy of the operator's credentials; the running instance already
+# health-checks those with the keys it legitimately holds.
+name: Free-tier watch
+
+on:
+  schedule:
+    # 06:20 UTC. Off the hour on purpose: scheduled runs cluster on the hour and
+    # get queued.
+    - cron: '20 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Probe keyless free tiers
+        id: probe
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm run probe:free-tiers -w server 2>&1 | tee probe-output.txt
+
+      - name: Report regressions
+        if: steps.probe.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TITLE: Free-tier regression detected
+        run: |
+          # The run summary is the one channel that always exists. Issues can be
+          # disabled on a repo (they are on this fork), and a watch whose only
+          # alarm channel is unavailable reports nothing at all.
+          {
+            echo '## Free-tier regression'
+            echo
+            echo '~~~'
+            cat probe-output.txt
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          {
+            echo 'The daily probe found a keyless provider that now demands a key.'
+            echo
+            echo '~~~'
+            cat probe-output.txt
+            echo '~~~'
+            echo
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > issue-body.md
+
+          # One rolling issue rather than a new one per day: a watch that opens
+          # an issue every morning is a watch that gets muted. Best effort — the
+          # summary above and the red run below are the real signal.
+          EXISTING="$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null || true)"
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file issue-body.md || echo 'could not comment on issue'
+          else
+            gh issue create --title "$TITLE" --body-file issue-body.md || echo 'issues unavailable — see the run summary'
+          fi
+
+          # Fail deliberately: a red scheduled run is what actually emails the
+          # repository owner.
+          exit 1

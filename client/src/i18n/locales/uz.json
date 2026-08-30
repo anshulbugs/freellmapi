@@ -461,7 +461,7 @@
     "probeFailed": "Sinov muvaffaqiyatsiz tugadi: {reason}",
     "discoverTitle": "Ushbu endpointdagi modellar",
     "discoverHint": "Ro'yxatga olinadigan modellarni tanlang. Allaqachon qo'shilganlari qulflangan qoladi.",
-    "discoverEmpty": "Ushbu endpoint hech qanday model qaytarmadi.",
+    "discoverEmpty": "No candidate providers yet.",
     "discoverAlreadyAdded": "Qo'shildi",
     "discoverSelectAll": "Hammasini tanlash",
     "modelsAdded": "{count} ta model qo'shildi",
@@ -596,7 +596,18 @@
     "testProxy": "Test",
     "testingProxy": "Testing…",
     "proxyTestOk": "Proxy works — {ms}ms round trip",
-    "proxyTestFail": "Proxy failed: {reason}"
+    "proxyTestFail": "Proxy failed: {reason}",
+    "tabDiscover": "Discover",
+    "discoverIntro": "Newly published free providers. Sign up with the provider, paste the key back here, and it is checked before anything is saved.",
+    "discoverSignUp": "Sign up",
+    "discoverKeyless": "No key needed",
+    "discoverKeyPlaceholder": "Paste API key",
+    "discoverTest": "Test & connect",
+    "discoverTesting": "Testing...",
+    "discoverPassed": "Verified: your key works and this endpoint enforces it.",
+    "discoverWarning": "Could not confirm this endpoint enforces your key. You can still save it.",
+    "discoverBlockedKey": "That key did not work against this endpoint.",
+    "discoverBlockedAuth": "Blocked: this endpoint accepts any key, so your key would protect nothing."
   },
   "backups": {
     "title": "Backups",

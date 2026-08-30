@@ -24,6 +24,15 @@ export class OpenAICompatProvider extends BaseProvider {
   readonly platform: Platform;
   readonly name: string;
   private readonly baseUrl: string;
+
+  /**
+   * The endpoint root, for health tooling that probes an provider directly
+   * rather than through a chat call. Read-only on purpose: the field stays
+   * private so nothing can retarget a registered provider at runtime.
+   */
+  get probeBaseUrl(): string {
+    return this.baseUrl;
+  }
   private readonly extraHeaders: Record<string, string>;
   private readonly validateUrl?: string;
   /** Per-provider HTTP timeout override. OpenAI-compatible gateways often buffer

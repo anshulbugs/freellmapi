@@ -461,7 +461,7 @@
     "probeFailed": "পরীক্ষা ব্যর্থ হয়েছে: {reason}",
     "discoverTitle": "এই এন্ডপয়েন্টের মডেল",
     "discoverHint": "নিবন্ধনের জন্য মডেল বেছে নিন। ইতিমধ্যে যোগ করা মডেল লক থাকে।",
-    "discoverEmpty": "এই এন্ডপয়েন্ট কোনো মডেল ফেরত দেয়নি।",
+    "discoverEmpty": "No candidate providers yet.",
     "discoverAlreadyAdded": "যোগ করা হয়েছে",
     "discoverSelectAll": "সব নির্বাচন করুন",
     "modelsAdded": "{count}টি মডেল যোগ করা হয়েছে",
@@ -596,7 +596,18 @@
     "testProxy": "Test",
     "testingProxy": "Testing…",
     "proxyTestOk": "Proxy works — {ms}ms round trip",
-    "proxyTestFail": "Proxy failed: {reason}"
+    "proxyTestFail": "Proxy failed: {reason}",
+    "tabDiscover": "Discover",
+    "discoverIntro": "Newly published free providers. Sign up with the provider, paste the key back here, and it is checked before anything is saved.",
+    "discoverSignUp": "Sign up",
+    "discoverKeyless": "No key needed",
+    "discoverKeyPlaceholder": "Paste API key",
+    "discoverTest": "Test & connect",
+    "discoverTesting": "Testing...",
+    "discoverPassed": "Verified: your key works and this endpoint enforces it.",
+    "discoverWarning": "Could not confirm this endpoint enforces your key. You can still save it.",
+    "discoverBlockedKey": "That key did not work against this endpoint.",
+    "discoverBlockedAuth": "Blocked: this endpoint accepts any key, so your key would protect nothing."
   },
   "backups": {
     "title": "Backups",
