@@ -260,6 +260,32 @@ export async function backupDbNow(db: Db, dbPath = getDefaultDbPath()): Promise<
   return { ok: true, target, bytes: plain.length };
 }
 
+/**
+ * Build the final backup to run when the process is asked to stop.
+ *
+ * The pump only ticks every 5 minutes, and on a host with no persistent disk
+ * that window is where data actually dies: a key added four minutes before a
+ * redeploy is not in the backup, the next container restores the older blob,
+ * and its own first pump tick uploads that stale copy over the good one. The
+ * loss is then permanent rather than a few minutes stale.
+ *
+ * Never rejects. A failed final backup must not stop the process from exiting,
+ * or the platform escalates to SIGKILL and nothing is flushed at all.
+ *
+ * @param db - The live database handle.
+ * @param dbPath - Path of the database file, matching the pump's.
+ */
+export function createShutdownBackup(db: Db, dbPath?: string): () => Promise<void> {
+  return async () => {
+    if (!backupTarget()) return;
+    try {
+      await backupDbNow(db, dbPath);
+    } catch (err) {
+      console.warn(`[db-backup] final backup failed: ${err instanceof Error ? err.message : err}`);
+    }
+  };
+}
+
 export function startDbBackupPump(db: Db, scheduler: Scheduler, dbPath = getDefaultDbPath()): (() => void) | null {
   if (!backupTarget()) return null;
   const run = () => {
