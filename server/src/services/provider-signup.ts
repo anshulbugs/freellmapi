@@ -1,10 +1,10 @@
 /**
  * Where an operator creates an account and collects an API key, per platform.
  *
- * Deliberately partial. An entry here sends someone to a page where they will
- * paste a credential, so a guessed or stale URL is worse than no link at all —
- * a platform with no verified console URL simply shows no button, and the
- * operator finds it the way they would have anyway.
+ * An entry here sends someone to a page where they will paste a credential, so
+ * a guessed or stale URL is not a broken link — it is a phishing vector. Every
+ * URL below was either already known-good or confirmed by search; a platform
+ * with no confirmed console page shows no button at all.
  *
  * Keys are `platform` values from the provider registry.
  */
@@ -35,10 +35,24 @@ export const SIGNUP_URLS: Readonly<Record<string, string>> = {
   volcengine: 'https://console.volcengine.com/ark',
   xfyun: 'https://console.xfyun.cn/',
   sealion: 'https://sea-lion.ai/',
-  // Keyless: no account needed, so these point at the product page rather than
-  // a console. The Add key flow accepts a blank key for both.
+  anyapi: 'https://dash.anyapi.ai/sign-in',
+  agnes: 'https://platform.agnes-ai.com/',
+  routeway: 'https://routeway.ai/auth',
+  bazaarlink: 'https://bazaarlink.ai/free',
+  ainative: 'https://ainative.studio/getting-started',
+  navy: 'https://api.navy/dashboard',
+  nara: 'https://router.bynara.id/',
+  orcarouter: 'https://www.orcarouter.ai/',
+  unorouter: 'https://unorouter.com/en/login',
+  xkiro: 'https://xkiro.com/',
+  longcat: 'https://longcat.chat/platform/',
+  // Keyless providers: no account exists to create, so these point at the
+  // product page. The Add key flow accepts a blank key for both.
   ovh: 'https://www.ovhcloud.com/en/public-cloud/ai-endpoints/',
   kilo: 'https://kilo.ai/',
+  // Apex derived from the registered API host (api.b.ai), NOT a confirmed
+  // console — no signup surface surfaced in search. Weakest entry here.
+  bai: 'https://b.ai/',
 };
 
 /**
