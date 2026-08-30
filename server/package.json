@@ -19,7 +19,8 @@
     "probe:free-tiers": "tsx src/scripts/probe-free-tiers.ts",
     "discover:providers": "tsx src/scripts/discover-providers.ts",
     "catalog:keygen": "tsx src/scripts/catalog-keygen.ts",
-    "build:catalog-site": "tsx src/scripts/build-catalog-site.ts"
+    "build:catalog-site": "tsx src/scripts/build-catalog-site.ts",
+    "recover:keys": "tsx src/scripts/recover-keys.ts"
   },
   "dependencies": {
     "@freellmapi/shared": "*",
