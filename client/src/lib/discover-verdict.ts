@@ -1,5 +1,5 @@
 export interface VerificationReport {
-  positive: { outcome: 'pass' | 'fail'; reason?: string }
+  positive: { outcome: 'pass' | 'fail'; modelId?: string; latencyMs?: number; toolCalls?: boolean; reason?: string }
   negative: { outcome: 'pass' | 'fail' | 'inconclusive'; status?: number; reason?: string }
   connectable: boolean
   warning?: string

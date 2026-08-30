@@ -67,6 +67,23 @@ describe('GET /api/keys/candidates', () => {
   });
 });
 
+// A provider the router already supports first-class does not belong in
+// Discover: connecting it there would register a bare custom endpoint instead
+// of the integration that already knows its quirks and quotas.
+describe('GET /api/keys/candidates filtering', () => {
+  it('hides a candidate whose baseUrl is already supported first-class', async () => {
+    fs.writeFileSync(feedFile, JSON.stringify([
+      CANDIDATE,
+      { ...CANDIDATE, id: 'groq-dupe', name: 'Groq', baseUrl: 'https://api.groq.com/openai/v1' },
+    ]));
+
+    const app = createApp();
+    const res = await request(app, 'GET', '/api/keys/candidates');
+
+    expect(res.body.candidates.map((c: { id: string }) => c.id)).toEqual(['example-ai']);
+  });
+});
+
 describe('POST /api/keys/candidates/:id/verify', () => {
   it('404s an unknown candidate', async () => {
     const app = createApp();

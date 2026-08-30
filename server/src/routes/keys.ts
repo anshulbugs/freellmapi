@@ -20,6 +20,7 @@ import { endpointScopeForBaseUrl, normalizeBaseUrl } from '../lib/endpoint-scope
 import { recordCustomModelTombstone } from '../services/custom-model-tombstone.js';
 import { loadCandidates, getCandidate } from '../services/provider-candidates.js';
 import { verifyEndpoint } from '../services/provider-verification.js';
+import { OpenAICompatProvider } from '../providers/openai-compat.js';
 import type { Db } from '../db/types.js';
 import { parseModelScope } from '../lib/model-scope.js';
 import { KEY_PROXY_URL_ERROR, KEY_PROXY_URL_MAX, decryptProxyUrl, encryptProxyUrl, isValidKeyProxyUrl, maskProxyUrl } from '../lib/key-proxy.js';
@@ -863,7 +864,19 @@ keysRouter.post('/custom/discover-models', async (req: Request, res: Response) =
 // verifyEndpoint decide whether it is safe to save.
 
 keysRouter.get('/candidates', (_req: Request, res: Response) => {
-  res.json({ candidates: loadCandidates() });
+  // A provider the router already supports first-class is not a candidate.
+  // Connecting it through Discover would register a bare custom endpoint,
+  // losing the quirks, quotas and health handling the real integration carries.
+  const supported = new Set(
+    getAllProviders()
+      .filter((p): p is OpenAICompatProvider => p instanceof OpenAICompatProvider)
+      .map(p => p.probeBaseUrl.replace(/\/+$/, '').toLowerCase()),
+  );
+
+  const candidates = loadCandidates()
+    .filter(c => !supported.has(c.baseUrl.replace(/\/+$/, '').toLowerCase()));
+
+  res.json({ candidates });
 });
 
 const verifyCandidateSchema = z.object({

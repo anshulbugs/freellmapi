@@ -607,7 +607,10 @@
     "discoverPassed": "Verified: your key works and this endpoint enforces it.",
     "discoverWarning": "Could not confirm this endpoint enforces your key. You can still save it.",
     "discoverBlockedKey": "That key did not work against this endpoint.",
-    "discoverBlockedAuth": "Blocked: this endpoint accepts any key, so your key would protect nothing."
+    "discoverBlockedAuth": "Blocked: this endpoint accepts any key, so your key would protect nothing.",
+    "discoverSave": "Save provider",
+    "discoverSaving": "Saving...",
+    "discoverSaved": "Provider added"
   },
   "backups": {
     "title": "Sauvegardes",

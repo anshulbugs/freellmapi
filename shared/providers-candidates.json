@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": "nebius",
+    "name": "Nebius AI Studio",
+    "signupUrl": "https://studio.nebius.ai/",
+    "baseUrl": "https://api.studio.nebius.ai/v1",
+    "authMode": "bearer",
+    "notes": "Free tier on signup. Check current limits and model list on their console.",
+    "addedAt": "2026-08-30",
+    "source": "seeded manually; endpoint probed 2026-08-30 (401 to an invalid key)"
+  },
+  {
+    "id": "hyperbolic",
+    "name": "Hyperbolic",
+    "signupUrl": "https://app.hyperbolic.xyz/",
+    "baseUrl": "https://api.hyperbolic.xyz/v1",
+    "authMode": "bearer",
+    "notes": "Free starting credit rather than a standing free tier - it can run out.",
+    "addedAt": "2026-08-30",
+    "source": "seeded manually; endpoint probed 2026-08-30 (401 to an invalid key)"
+  },
+  {
+    "id": "chutes",
+    "name": "Chutes",
+    "signupUrl": "https://chutes.ai/",
+    "baseUrl": "https://llm.chutes.ai/v1",
+    "authMode": "bearer",
+    "notes": "Decentralised inference with a free quota. Verify terms before sending anything sensitive.",
+    "addedAt": "2026-08-30",
+    "source": "seeded manually; endpoint probed 2026-08-30 (401 to an invalid key)"
+  }
+]

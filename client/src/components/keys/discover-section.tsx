@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
@@ -26,8 +26,10 @@ interface VerifyResponse {
 
 function CandidateRow({ candidate }: { candidate: Candidate }) {
   const { t } = useI18n()
+  const queryClient = useQueryClient()
   const [apiKey, setApiKey] = useState('')
   const [result, setResult] = useState<VerificationReport | null>(null)
+  const [saved, setSaved] = useState(false)
 
   const verify = useMutation({
     mutationFn: () =>
@@ -36,6 +38,30 @@ function CandidateRow({ candidate }: { candidate: Candidate }) {
         body: JSON.stringify({ apiKey }),
       }),
     onSuccess: data => setResult(data.report),
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  // Registers the candidate as a custom endpoint, seeded with the model the
+  // probe actually reached. Nothing here invents a model id: an endpoint's model
+  // list changes weekly, and the probed one is the single id known to work with
+  // this key right now.
+  const save = useMutation({
+    mutationFn: () =>
+      apiFetch('/api/keys/custom', {
+        method: 'POST',
+        body: JSON.stringify({
+          baseUrl: candidate.baseUrl,
+          apiKey: apiKey || undefined,
+          label: candidate.name,
+          model: result?.positive.modelId,
+          ...(result?.positive.toolCalls !== undefined ? { supportsTools: result.positive.toolCalls } : {}),
+        }),
+      }),
+    onSuccess: () => {
+      setSaved(true)
+      toast.success(t('keys.discoverSaved'))
+      void queryClient.invalidateQueries({ queryKey: ['keys'] })
+    },
     onError: (err: Error) => toast.error(err.message),
   })
 
@@ -104,6 +130,15 @@ function CandidateRow({ candidate }: { candidate: Candidate }) {
           {verdict.tone === 'blocked' && <ShieldAlert className="size-4 shrink-0" />}
           <span>{t(verdict.messageKey)}</span>
         </div>
+      )}
+
+      {verdict?.canSave && !saved && (
+        <Button
+          onClick={() => save.mutate()}
+          disabled={save.isPending || !result?.positive.modelId}
+        >
+          {save.isPending ? t('keys.discoverSaving') : t('keys.discoverSave')}
+        </Button>
       )}
     </div>
   )
