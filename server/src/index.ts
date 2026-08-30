@@ -11,7 +11,7 @@ import { installProcessSafetyNet } from './lib/process-safety-net.js';
 import { NodeScheduler } from './lib/scheduler.js';
 import { loadConfig } from './lib/config.js';
 import { applyDeclarativeConfigFromEnv } from './services/declarative-config.js';
-import { restoreDbBackupIfNeeded, startDbBackupPump, createShutdownBackup } from './lib/db-backup.js';
+import { restoreDbBackupIfNeeded, startDbBackupPump, createShutdownBackup, markDbDigestFromDisk } from './lib/db-backup.js';
 import { startBackupScheduler } from './services/backups.js';
 import { userCount } from './services/auth.js';
 import { generateSetupCode } from './lib/setup-code.js';
@@ -76,6 +76,12 @@ async function main() {
     startHealthChecker(scheduler);
     startCatalogSync(scheduler);
     startCooldownProbe(scheduler);
+    // Baseline the digest AFTER boot work (migrations, catalog re-apply) has
+    // settled, so only genuine post-boot writes look like a change. Without
+    // this the first pump tick uploads a snapshot this container merely
+    // restored, overwriting the newer backup an overlapping container is about
+    // to flush on its way out.
+    markDbDigestFromDisk(config.dbPath ?? undefined);
     startDbBackupPump(getDb(), scheduler, config.dbPath ?? undefined);
 
     // Flush a final backup when the platform asks us to stop. On a host with no

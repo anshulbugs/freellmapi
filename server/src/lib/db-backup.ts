@@ -241,6 +241,25 @@ export async function restoreDbBackupIfNeeded(dbPath = getDefaultDbPath()): Prom
   return { ok: true, target, bytes: restored.length, restored: true };
 }
 
+// Digest of the database bytes as last uploaded, paired with the target that
+// received them. Module-scoped because the pump, the shutdown flush and any
+// manual call must share one view of "have we actually changed anything".
+// Target-scoped because a destination that has never received this database
+// needs the upload regardless of whether the bytes are familiar to us.
+let lastBackedUp: { target: string; digest: string } | null = null;
+
+/** Record the digest of a database we did not write, so we never re-upload it. */
+export function markDbDigestFromDisk(dbPath = getDefaultDbPath()): void {
+  const target = backupTarget();
+  if (!target) return;
+  try {
+    const digest = crypto.createHash('sha256').update(fs.readFileSync(dbPath)).digest('hex');
+    lastBackedUp = { target, digest };
+  } catch {
+    lastBackedUp = null;
+  }
+}
+
 export async function backupDbNow(db: Db, dbPath = getDefaultDbPath()): Promise<DbBackupResult> {
   const target = backupTarget();
   if (!target) return { ok: true, skipped: 'not configured' };
@@ -254,8 +273,20 @@ export async function backupDbNow(db: Db, dbPath = getDefaultDbPath()): Promise<
   }
 
   const plain = fs.readFileSync(dbPath);
+
+  // A container that restored a snapshot and has written nothing to it has
+  // nothing to contribute. Render overlaps containers on deploy -- the new one
+  // boots and restores BEFORE the old one is signalled to stop -- so an
+  // unconditional upload here overwrites the good backup the outgoing container
+  // is about to flush, which is how a stale snapshot becomes the permanent one.
+  const digest = crypto.createHash('sha256').update(plain).digest('hex');
+  if (lastBackedUp && lastBackedUp.target === target && lastBackedUp.digest === digest) {
+    return { ok: true, target, bytes: plain.length, skipped: 'unchanged' };
+  }
+
   const payload = encryptBackup(gzipSync(plain));
   await writeTarget(target, payload);
+  lastBackedUp = { target, digest };
   console.log(`[db-backup] uploaded ${plain.length} bytes to ${target}`);
   return { ok: true, target, bytes: plain.length };
 }
