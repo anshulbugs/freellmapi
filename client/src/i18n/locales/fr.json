@@ -610,7 +610,11 @@
     "discoverBlockedAuth": "Blocked: this endpoint accepts any key, so your key would protect nothing.",
     "discoverSave": "Save provider",
     "discoverSaving": "Saving...",
-    "discoverSaved": "Provider added"
+    "discoverSaved": "Provider added",
+    "discoverAddKey": "Add key",
+    "discoverSupportedTitle": "Supported providers",
+    "discoverSupportedIntro": "Already integrated here. Sign up with the provider, then add the key.",
+    "discoverNewTitle": "New providers"
   },
   "backups": {
     "title": "Sauvegardes",

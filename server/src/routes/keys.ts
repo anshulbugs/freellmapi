@@ -19,6 +19,7 @@ import { probeEmbeddingDimensions, registerCustomEmbeddingModel } from '../servi
 import { endpointScopeForBaseUrl, normalizeBaseUrl } from '../lib/endpoint-scope.js';
 import { recordCustomModelTombstone } from '../services/custom-model-tombstone.js';
 import { loadCandidates, getCandidate } from '../services/provider-candidates.js';
+import { signupUrlFor } from '../services/provider-signup.js';
 import { verifyEndpoint } from '../services/provider-verification.js';
 import { OpenAICompatProvider } from '../providers/openai-compat.js';
 import type { Db } from '../db/types.js';
@@ -222,6 +223,9 @@ keysRouter.get('/providers', (_req: Request, res: Response) => {
     .map(p => {
       const counts = countsByPlatform.get(p.platform);
       const keyCount = counts?.total_keys ?? 0;
+      // Where to get a key, when we have a verified URL. Absent rather than
+      // guessed: this link leads to a page where a credential gets created.
+      const signupUrl = signupUrlFor(p.platform);
       return {
         platform: p.platform,
         name: p.name,
@@ -229,6 +233,7 @@ keysRouter.get('/providers', (_req: Request, res: Response) => {
         configured: keyCount > 0,
         keyCount,
         enabledKeyCount: counts?.enabled_keys ?? 0,
+        ...(signupUrl ? { signupUrl } : {}),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));

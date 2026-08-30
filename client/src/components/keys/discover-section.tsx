@@ -19,6 +19,14 @@ interface Candidate {
   notes?: string
 }
 
+interface SupportedProvider {
+  platform: string
+  name: string
+  keyless: boolean
+  configured: boolean
+  signupUrl?: string
+}
+
 interface VerifyResponse {
   candidate: { id: string; name: string; baseUrl: string }
   report: VerificationReport
@@ -144,30 +152,94 @@ function CandidateRow({ candidate }: { candidate: Candidate }) {
   )
 }
 
-export function DiscoverSection() {
+// A provider the router already integrates. Connecting goes through the normal
+// Add key dialog rather than the candidate flow: the first-class path carries
+// the quirks, quota metadata and health handling a bare custom endpoint loses,
+// and it already validates the key on save.
+function SupportedRow({
+  provider,
+  onAddKey,
+}: {
+  provider: SupportedProvider
+  onAddKey: (platform: string) => void
+}) {
+  const { t } = useI18n()
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{provider.name}</span>
+          {provider.keyless && <Badge variant="secondary">{t('keys.discoverKeyless')}</Badge>}
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {provider.signupUrl && (
+          <a
+            href={provider.signupUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
+          >
+            {t('keys.discoverSignUp')}
+            <ExternalLink className="size-3.5" />
+          </a>
+        )}
+        <Button size="sm" onClick={() => onAddKey(provider.platform)}>
+          {t('keys.discoverAddKey')}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export function DiscoverSection({ onAddKey }: { onAddKey: (platform: string) => void }) {
   const { t } = useI18n()
   const { data, isLoading } = useQuery({
     queryKey: ['provider-candidates'],
     queryFn: () => apiFetch<{ candidates: Candidate[] }>('/api/keys/candidates'),
   })
+  const { data: providerData } = useQuery({
+    queryKey: ['keys-providers'],
+    queryFn: () => apiFetch<{ providers: SupportedProvider[] }>('/api/keys/providers'),
+  })
 
   if (isLoading) return null
 
   const candidates = data?.candidates ?? []
+  // Only what is still missing: a provider already holding a key is not
+  // something to onboard, and listing it would bury the ones that are.
+  const supported = (providerData?.providers ?? []).filter(p => !p.configured)
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">{t('keys.discoverIntro')}</p>
-
-      {candidates.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('keys.discoverEmpty')}</p>
-      ) : (
-        <div className="space-y-3">
-          {candidates.map(candidate => (
-            <CandidateRow key={candidate.id} candidate={candidate} />
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <div>
+          <h3 className="font-medium">{t('keys.discoverSupportedTitle')}</h3>
+          <p className="text-sm text-muted-foreground">{t('keys.discoverSupportedIntro')}</p>
+        </div>
+        <div className="space-y-2">
+          {supported.map(provider => (
+            <SupportedRow key={provider.platform} provider={provider} onAddKey={onAddKey} />
           ))}
         </div>
-      )}
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <h3 className="font-medium">{t('keys.discoverNewTitle')}</h3>
+          <p className="text-sm text-muted-foreground">{t('keys.discoverIntro')}</p>
+        </div>
+        {candidates.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('keys.discoverEmpty')}</p>
+        ) : (
+          <div className="space-y-3">
+            {candidates.map(candidate => (
+              <CandidateRow key={candidate.id} candidate={candidate} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

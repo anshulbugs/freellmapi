@@ -114,7 +114,7 @@ export default function KeysPage() {
         {tab === 'anthropic' && <AnthropicSection />}
         {tab === 'agents' && <AgentCompatibilitySection />}
 
-        {tab === 'discover' && <DiscoverSection />}
+        {tab === 'discover' && <DiscoverSection onAddKey={platform => openAddKey(platform as Platform)} />}
 
         {tab === 'quotaSignals' && (
           <QuotaSignalsSection states={(healthData?.quotaStates ?? []).slice(0, 24)} />
