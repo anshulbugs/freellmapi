@@ -82,4 +82,14 @@ describe('Proxy authentication and CORS', () => {
     expect(status).toBe(200);
     expect(headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
   });
+  it("allows the locally served notebook origin through CORS, including the preflight for the chat route", async () => {
+    const { headers } = await request(app, "OPTIONS", "/v1/chat/completions", undefined, {
+      Origin: "http://127.0.0.1:8765",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "authorization,content-type",
+    });
+
+    expect(headers.get("access-control-allow-origin")).toBe("http://127.0.0.1:8765");
+    expect((headers.get("access-control-allow-headers") ?? "").toLowerCase()).toContain("authorization");
+  });
 });
