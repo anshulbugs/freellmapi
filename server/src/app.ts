@@ -49,6 +49,9 @@ const DEFAULT_DASHBOARD_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://[::1]:5173',
+  // The AI Engineering Notebook, served locally. Add other hosts via DASHBOARD_ORIGINS.
+  'http://127.0.0.1:8765',
+  'http://localhost:8765',
 ];
 
 // SHA-256 of the inline theme/direction bootstrap in client/index.html, which
