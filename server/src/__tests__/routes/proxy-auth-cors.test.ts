@@ -65,23 +65,49 @@ describe('Proxy authentication and CORS', () => {
     expect(body?.error?.type).not.toBe('authentication_error');
   });
 
-  it('does not grant CORS access to arbitrary browser origins', async () => {
+  // Every surface authenticates with a header token (unified key or dashboard
+  // session bearer) and nothing uses cookies, so an open origin policy grants a
+  // foreign page nothing it couldn't already do with the key in hand.
+  it('grants CORS access to any browser origin', async () => {
     const { status, headers } = await request(app, 'GET', '/api/ping', undefined, {
-      Origin: 'https://attacker.example',
+      Origin: 'https://some-app.example',
     });
 
     expect(status).toBe(200);
-    expect(headers.get('access-control-allow-origin')).toBeNull();
+    expect(headers.get('access-control-allow-origin')).toBe('*');
+    expect(headers.get('access-control-allow-credentials')).toBeNull();
   });
 
-  it('allows the local dashboard origin through CORS', async () => {
-    const { status, headers } = await request(app, 'GET', '/api/ping', undefined, {
-      Origin: 'http://localhost:5173',
+  it('answers a cross-origin preflight for an authenticated proxy call', async () => {
+    const { status, headers } = await request(app, 'OPTIONS', '/v1/chat/completions', undefined, {
+      Origin: 'https://some-app.example',
+      'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Headers': 'authorization,content-type,x-api-key,anthropic-version',
     });
 
-    expect(status).toBe(200);
-    expect(headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    expect(status).toBe(204);
+    expect(headers.get('access-control-allow-origin')).toBe('*');
+    expect(headers.get('access-control-allow-headers')).toBe('authorization,content-type,x-api-key,anthropic-version');
   });
+
+  it('lets a public page preflight into a loopback install (Private Network Access)', async () => {
+    const { headers } = await request(app, 'OPTIONS', '/v1/messages', undefined, {
+      Origin: 'https://some-app.example',
+      'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Private-Network': 'true',
+    });
+
+    expect(headers.get('access-control-allow-private-network')).toBe('true');
+  });
+
+  it('exposes response headers such as X-Routed-Via to browser callers', async () => {
+    const { headers } = await request(app, 'GET', '/api/ping', undefined, {
+      Origin: 'https://some-app.example',
+    });
+
+    expect(headers.get('access-control-expose-headers')).toBe('*');
+  });
+
   it("allows the locally served notebook origin through CORS, including the preflight for the chat route", async () => {
     const { headers } = await request(app, "OPTIONS", "/v1/chat/completions", undefined, {
       Origin: "http://127.0.0.1:8765",
@@ -89,7 +115,7 @@ describe('Proxy authentication and CORS', () => {
       "Access-Control-Request-Headers": "authorization,content-type",
     });
 
-    expect(headers.get("access-control-allow-origin")).toBe("http://127.0.0.1:8765");
+    expect(headers.get("access-control-allow-origin")).toBe("*");
     expect((headers.get("access-control-allow-headers") ?? "").toLowerCase()).toContain("authorization");
   });
 });

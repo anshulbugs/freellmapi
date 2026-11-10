@@ -39,7 +39,6 @@ export interface Config {
   port: number | string;
   host: string;
   dbPath: string | null;
-  dashboardOrigins: string[];
   clientDist: string | null;
   proxyRateLimitRpm: number;
   /** JSON body limit (bytes) for the LLM wire surfaces — see
@@ -65,10 +64,6 @@ export function loadConfig(): Config {
     // disabled fall back to IPv4-only below; HOST overrides the default outright.
     host: process.env.HOST ?? '::',
     dbPath: process.env.FREEAPI_DB_PATH?.trim() || null,
-    dashboardOrigins: (process.env.DASHBOARD_ORIGINS ?? '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean),
     clientDist: process.env.CLIENT_DIST ?? null,
     proxyRateLimitRpm: parseRateLimitRpm(),
     requestBodyLimitBytes: parseRequestBodyLimitBytes(),

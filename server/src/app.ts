@@ -45,15 +45,6 @@ import { loadConfig } from './lib/config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const DEFAULT_DASHBOARD_ORIGINS = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://[::1]:5173',
-  // The AI Engineering Notebook, served locally. Add other hosts via DASHBOARD_ORIGINS.
-  'http://127.0.0.1:8765',
-  'http://localhost:8765',
-];
-
 // SHA-256 of the inline theme/direction bootstrap in client/index.html, which
 // must run before first paint. Kept as a literal so the CSP header stays a
 // constant string; csp-inline-bootstrap.test.ts recomputes it from the real
@@ -99,10 +90,6 @@ function isTrustworthyOrigin(req: express.Request): boolean {
 export function createApp(config?: Config) {
   const cfg = config ?? loadConfig();
   const app = express();
-  const allowedCorsOrigins = new Set([
-    ...DEFAULT_DASHBOARD_ORIGINS,
-    ...cfg.dashboardOrigins,
-  ]);
 
   // CSP: default-src 'self' restricts content to the same origin. Scripts
   // are hashed by the Vite/React build, so 'self' works in production. Inline
@@ -173,11 +160,20 @@ export function createApp(config?: Config) {
 
     next();
   });
-  app.use(cors({
-    origin(origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-      callback(null, !origin || allowedCorsOrigins.has(origin));
-    },
-  }));
+  // Open to every origin: all auth is a header token (unified key, client
+  // profile key, or dashboard session bearer) and no route reads cookies, so
+  // a foreign page gains nothing it couldn't do with the key directly. Never
+  // turn on `credentials` here — that is what would make `*` unsafe.
+  // Chrome's Private Network Access asks a loopback install to opt in before a
+  // public page may preflight into it; answer yes so browser apps can reach a
+  // local proxy as well as a deployed one.
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS' && req.headers['access-control-request-private-network'] === 'true') {
+      res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
+    next();
+  });
+  app.use(cors({ origin: '*', exposedHeaders: '*' }));
   // Two-tier JSON body limits. The LLM wire surfaces carry vision payloads —
   // base64 images inline in the body (~33% inflation; google.ts forwards
   // images up to 8MB apiece) — so a single-screenshot Codex turn can clear
